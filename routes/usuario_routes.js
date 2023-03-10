@@ -1,5 +1,6 @@
 const express = require("express");
 const pool = require("../conecction");
+const PDFDocument = require("pdfkit-table");; 
 const router3 = express.Router();
 
 //Ruta para obtener todos los usuarios
@@ -36,6 +37,53 @@ router3.get('/usuario/depto/:id',async(req,res)=>{
     }
 });
 
+//Ruta para obtener un pdf con los usuarios de un departamento
+//Ruta para obtener un pdf con los usuarios de un departamento
+router3.get('/usuario/report/:id',async (req,res)=>{
+    try {
+        // Crear un nuevo documento PDF
+        const doc = new PDFDocument();
+        // Agregar contenido al documento
+        doc.fontSize(14).text('Reporte de datos');
+
+        const tableHeaders = ["Correo", "Nombre", "Departamento"];
+        const tableRows = [];
+
+        const query='SELECT u.*, d.departameto from usuario u join departamento d using(id_departamento) where u.id_departamento=$1'    
+        pool.query(query,[parseInt(req.params.id)],(error,result)=>{
+            if (error) {
+                console.log(error);
+            } else {
+                result.rows.forEach((row) => {
+                    tableRows.push([row.correo, row.nombre, row.departameto]);
+                });
+
+                // Crear una tabla con los datos obtenidos
+                doc.moveDown().fontSize(10);
+                const table = {
+                    headers: tableHeaders,
+                    rows: tableRows,
+                };
+                doc.table(table, {
+                    prepareHeader: () => doc.font('Helvetica-Bold'),
+                    prepareRow: (row, i) => doc.font('Helvetica').fontSize(10),
+                });
+            }
+            // Terminar el documento y enviarlo como respuesta
+            doc.end();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename=reporte.pdf');
+            doc.pipe(res);
+        });
+
+    } catch (error) {
+        res.send('Ocurrio un error');
+        res.status(500);
+    }
+});
+
+
+
 //Ruta para dar de alta a nuevos usuarios.
 router3.post('/usuario',async(req,res)=>{
     try {
@@ -58,18 +106,35 @@ router3.post('/usuario',async(req,res)=>{
 //Ruta para modificar un usuario.
 router3.put('/usuario/:id',async(req,res)=>{
     try {
-        
+        const correo=req.body.correo;
+        const nombre=req.body.nombre;
+        const id_departamento=req.body.id_departamento;
+        const query="Update usuario set correo=$1,nombre=$2,id_departamento=$3";
+        await pool.query(query,[correo,nombre,parseInt(id_departamento)]);
+        res.send('Modificacion exitosa');
+        res.status(200);
     } catch (error) {
-        
+        console.log(error);
+        res.status(500);
     }
 });
 
-//Ruta para eliminar un usuario.
-router3.delete('/usuario/:id',async(req,res)=>{
+//Ruta para eliminar un usuario utilizando transacciones.
+router3.delete('/usuario/:id', async (req, res) => {
+    const client = await pool.connect();
     try {
-        
+      await client.query('BEGIN');
+      const query = 'DELETE FROM usuario WHERE id_usuario = $1';
+      await client.query(query, [parseInt(req.params.id)]);
+      await client.query('COMMIT');
+      res.send('Eliminado con éxito');
+      res.status(200);
     } catch (error) {
-        
+      await client.query('ROLLBACK');
+      console.log(error);
+      res.status(500);
+    } finally {
+      client.release();
     }
 });
 
