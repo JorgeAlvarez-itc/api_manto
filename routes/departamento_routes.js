@@ -23,13 +23,4 @@ router.get('/departamento/:id', async(req,res)=>{
     }
 });
 
-
-/*
-router.post('/departamento/:id', async(req,res)=>{
-    try{
-        const {rows} = await pool.query('DELETE * FROM departamento where id_departamento='+ObjectId(req.params));
-    }
-});
-*/
-
 module.exports = router;
