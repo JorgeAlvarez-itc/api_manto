@@ -4,6 +4,7 @@ const pool= require('../conecction')
 
 const router = express.Router();
 
+//Ruta para obtener todos los departamentos
 router.get('/departamento', async (req, res) => {
     try {
         const { rows } = await pool.query('SELECT * FROM departamento');
@@ -14,6 +15,7 @@ router.get('/departamento', async (req, res) => {
     }
 });
 
+//Ruta para obtener un departamento
 router.get('/departamento/:id', async(req,res)=>{
     try{
         const {rows} = await pool.query('SELECT * FROM departamento where id_departamento=$1', [parseInt(req.params.id)]);

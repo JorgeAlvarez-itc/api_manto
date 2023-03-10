@@ -1,6 +1,5 @@
 const express = require("express");
 const pool = require("../conecction");
-
 const router2 = express.Router();
 
 //Ruta para obtener todos los registros de mantenimiento
@@ -25,3 +24,5 @@ router2.get('/manto/:id',async(req,res)=>{
         console.log(error);
     }
 });
+
+module.exports = router2;
