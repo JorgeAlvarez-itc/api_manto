@@ -2,6 +2,7 @@ const express = require("express");
 const pool = require("../conecction");
 const PDFDocument = require("pdfkit-table");; 
 const router3 = express.Router();
+const bcrypt = require('bcrypt');
 
 //Ruta para obtener todos los usuarios
 router3.get('/usuario',async(req,res)=>{
@@ -37,25 +38,49 @@ router3.get('/usuario/depto/:id',async(req,res)=>{
     }
 });
 
-//Ruta para obtener un pdf con los usuarios de un departamento
+// Ruta para login
+router3.post('/usuario/login', async (req, res) => {
+    try {
+        // Verificar si el usuario existe en la base de datos
+        const userQuery = 'SELECT * FROM usuario WHERE correo = $1';
+        const result = await pool.query(userQuery, [req.body.correo]);
+        if (result.rows.length === 0) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
+        }
+        const usuario = result.rows[0];
+        if (usuario.contrasena === req.body.contrasena) {
+            res.status(200).send('Bienvenido');
+        } else {
+            console.log(usuario.correo);
+            return res.status(401).json({ message: 'Credenciales inválidas' });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500);
+    }
+});
+
+
 //Ruta para obtener un pdf con los usuarios de un departamento
 router3.get('/usuario/report/:id',async (req,res)=>{
     try {
         // Crear un nuevo documento PDF
         const doc = new PDFDocument();
-        // Agregar contenido al documento
-        doc.fontSize(14).text('Reporte de datos');
-
-        const tableHeaders = ["Correo", "Nombre", "Departamento"];
+        const tableHeaders = ["Nombre", "Departamento","Numero de serie","Modelo"];
         const tableRows = [];
-
-        const query='SELECT u.*, d.departameto from usuario u join departamento d using(id_departamento) where u.id_departamento=$1'    
+        const query = 'SELECT u.nombre, d.departameto, m.no_serie, m.modelo ' + 
+              'FROM usuario u ' + 
+              'JOIN departamento d ON u.id_departamento = d.id_departamento ' + 
+              'JOIN maquina m ON u.id_usuario = m.id_usuario ' + 
+              'WHERE u.id_departamento = $1';
         pool.query(query,[parseInt(req.params.id)],(error,result)=>{
+            // Agregar contenido al documento
+            doc.fontSize(14).text('Reporte de usuarios del departamento: '+ result.rows[0].departameto);
             if (error) {
                 console.log(error);
             } else {
                 result.rows.forEach((row) => {
-                    tableRows.push([row.correo, row.nombre, row.departameto]);
+                    tableRows.push([row.nombre, row.departameto,row.no_serie,row.modelo ]);
                 });
 
                 // Crear una tabla con los datos obtenidos
