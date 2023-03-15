@@ -7,7 +7,7 @@ const bcrypt = require('bcrypt');
 //Ruta para obtener todos los usuarios
 router3.get('/usuario',async(req,res)=>{
     try {
-        const { rows } = await pool.query("SELECT * FROM usuario");
+        const { rows } = await pool.query("SELECT u.*, departamento.departameto FROM usuario u join departamento using(id_departamento)");
         res.send(rows);
     } catch (error) {
         console.log(error);

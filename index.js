@@ -3,12 +3,9 @@ const connection = require('./conecction');
 const routes = require('./routes/departamento_routes');
 const routes2 = require('./routes/maquina_routes');
 const routes3 = require('./routes/usuario_routes');
-/*
-const routes = require('./routes/products_routes');
-const user_routes = require('./routes/user_routes');
-const routes2 = require('./routes/categories_routes');
-const order_routes = require('./routes/order_routes');
-*/
+const routes4= require('./routes/utilities_routes');
+
+
 const cors = require('cors');
 
 const app = express()
@@ -22,6 +19,8 @@ app.use(cors());
 app.use('/api/v1', routes);
 app.use('/api/v1', routes2);
 app.use('/api/v1', routes3);
+app.use('/api/v1', routes4);
+
 
 app.get('/', (req, res) => res.send('Starting API MANTENIMIENTO ITCELAYA'))
 app.listen(port, () => console.log(`START API ON PORT:${port}!`))
