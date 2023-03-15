@@ -49,7 +49,7 @@ router3.post('/usuario/login', async (req, res) => {
         }
         const usuario = result.rows[0];
         if (usuario.contrasena === req.body.contrasena) {
-            res.status(200).json({usuario:usuario});
+            res.status(200).json({usuario:usuario, permiso: await getPermisos(usuario['id_usuario'])});
         } else {
             console.log(usuario.correo);
             return res.status(401).json({ message: 'Credenciales inválidas' });
@@ -59,6 +59,13 @@ router3.post('/usuario/login', async (req, res) => {
         res.status(500);
     }
 });
+
+
+//Funcion que retorna los permisos de un usuario
+async function getPermisos(id_usuario){
+    const { rows } = await pool.query('SELECT permiso FROM permisos JOIN usuario_permiso USING (id_permiso) WHERE id_usuario = $1',[id_usuario]);
+    return rows[0]['permiso'];
+}
 
 
 //Ruta para obtener un pdf con los usuarios de un departamento
