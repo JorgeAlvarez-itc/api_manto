@@ -49,7 +49,7 @@ router3.post('/usuario/login', async (req, res) => {
         }
         const usuario = result.rows[0];
         if (usuario.contrasena === req.body.contrasena) {
-            res.status(200).send('Bienvenido');
+            res.status(200).json({usuario:usuario});
         } else {
             console.log(usuario.correo);
             return res.status(401).json({ message: 'Credenciales inválidas' });
