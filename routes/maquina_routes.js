@@ -32,6 +32,23 @@ router1.get("/maquina/:id", async (req, res) => {
   }
 });
 
+//Ruta para obtener la informacion de una maquina asignada a un usuario
+router1.get("/maquina/user/:id",async(req,res)=>{
+  try {
+    const { rows } = await pool.query(
+      `
+      SELECT *
+      FROM maquina 
+      WHERE id_usuario=$1
+      `,
+      [parseInt(req.params.id)]
+    );
+    res.send(rows);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 //Ruta para obtener las maquinas de cierto departamento
 router1.get("/maquina/depto/:id", async (req, res) => {
   try {
