@@ -18,7 +18,12 @@ router1.get("/maquina", async (req, res) => {
 router1.get("/maquina/:id", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM maquina where id_maquina=$1",
+      `
+      SELECT maquina.*, usuario.nombre, usuario.correo 
+      FROM maquina 
+      INNER JOIN usuario ON maquina.id_usuario = usuario.id_usuario
+      WHERE id_maquina=$1
+      `,
       [parseInt(req.params.id)]
     );
     res.send(rows);
