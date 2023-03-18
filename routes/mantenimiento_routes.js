@@ -27,7 +27,7 @@ router2.get('/manto/:id',async(req,res)=>{
 
 //Ruta para levantar una orden de mantenimiento :c
 router2.post('/manto/orden', async (req, res) => {
-  const client = await pool.connect();
+  const client = pool;
   try {
     await client.query('BEGIN');
 
