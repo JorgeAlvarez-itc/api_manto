@@ -25,6 +25,18 @@ router2.get('/manto/:id',async(req,res)=>{
     }
 });
 
+//Ruta para obtener los tipos de mantenimiento:
+router2.get('/manto/tipo',async(req,res)=>{
+  try {
+      const { rows } = await pool.query("SELECT * FROM tipo_mant");
+      res.send(rows);
+    } catch (error) {
+      console.log(error);
+  }
+});
+
+
+
 //Ruta para levantar una orden de mantenimiento :c
 router2.post('/manto/orden', async (req, res) => {
   const client = pool;
