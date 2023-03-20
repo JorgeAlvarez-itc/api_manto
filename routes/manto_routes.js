@@ -1,5 +1,6 @@
 const express = require("express");
 const pool = require("../conecction");
+
 const router2 = express.Router();
 
 //Ruta para obtener todos los registros de mantenimiento
@@ -26,7 +27,7 @@ router2.get('/manto/:id',async(req,res)=>{
 });
 
 //Ruta para obtener los tipos de mantenimiento:
-router2.get('/manto/tipo',async(req,res)=>{
+router2.get('/aux/tipo',async(req,res)=>{
   try {
       const { rows } = await pool.query("SELECT * FROM tipo_mant");
       res.send(rows);
@@ -34,7 +35,6 @@ router2.get('/manto/tipo',async(req,res)=>{
       console.log(error);
   }
 });
-
 
 
 //Ruta para levantar una orden de mantenimiento :c
