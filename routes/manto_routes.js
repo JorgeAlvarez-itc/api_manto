@@ -13,6 +13,56 @@ router2.get('/manto',async(req,res)=>{
     }
 });
 
+router2.get('/manto_view', async (req, res) => {
+  try {
+    const query = `
+    SELECT mantenimiento.*,no_serie,status,tipo,nombre AS responsable
+    FROM mantenimiento
+        JOIN status_manto USING (id_status)
+        JOIN maquina USING (id_maquina)
+        JOIN tipo_mant USING (id_tipo)
+        JOIN usuario ON id_responsable = usuario.id_usuario
+    ORDER BY fecha_mant DESC;
+      `;
+    const { rows } = await pool.query(query);
+    res.send(rows);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router2.patch('/manto_status', async (req, res) => {
+  try {
+    pool.query('BEGIN');
+    query = "UPDATE mantenimiento SET id_status = 2 where id_mantenimiento = $1;"
+    result = await pool.query(query, [parseInt(req.body.id)]);
+    query = "UPDATE maquina SET fecha_anual = now() + interval '1 year' WHERE id_maquina = $1;"
+    result = await pool.query(query, [parseInt(req.body.maquina)]);
+    pool.query('COMMIT');
+    query = `
+    SELECT mantenimiento.*,no_serie,status,tipo,nombre AS responsable
+    FROM mantenimiento
+        JOIN status_manto USING (id_status)
+        JOIN maquina USING (id_maquina)
+        JOIN tipo_mant USING (id_tipo)
+        JOIN usuario ON id_responsable = usuario.id_usuario
+    ORDER BY fecha_mant DESC;
+      `;
+    const { rows } = await pool.query(query);
+    res.send(rows);
+  } catch (error) {
+    pool.query('ROLLBACK');
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: 'Error en la actualización del status',
+      error: err
+    });
+  } finally {
+    pool.release();
+  }
+});
+
 //Ruta para obtener la informacion de un mantenimiento en especifico
 router2.get('/manto/:id',async(req,res)=>{
     try {
@@ -56,7 +106,7 @@ router2.post('/manto/orden', async (req, res) => {
     const id_usuario = result2.rows[0].id_usuario;
 
     // Hacer una insersión en la tabla mantenimiento
-    const query3 = 'INSERT INTO mantenimiento (descripcion, id_tipo, id_maquina, piezas, materiales, fecha_mant, id_responsable) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_mantenimiento';
+    const query3 = 'INSERT INTO mantenimiento (descripcion, id_tipo, id_maquina, piezas, materiales, fecha_mant, id_responsable, id_status) VALUES ($1, $2, $3, $4, $5, $6, $7, 1) RETURNING id_mantenimiento';
     const values3 = [req.body.descripcion, req.body.id_tipo, req.body.id_maquina, req.body.piezas, req.body.materiales, req.body.fecha_mant, req.body.id_responsable];
     const result3 = await client.query(query3, values3);
     const id_mantenimiento = result3.rows[0].id_mantenimiento;

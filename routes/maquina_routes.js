@@ -7,7 +7,12 @@ const router1 = express.Router();
 //Ruta para obtener un listado de todas las maquinas.
 router1.get("/maquina", async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM maquina");
+    const { rows } = await pool.query(`
+      SELECT maquina.*,nombre,departamento.departameto as depto 
+      FROM maquina 
+        join usuario using (id_usuario) 
+        join departamento on maquina.id_departamento = departamento.id_departamento
+      `);
     res.send(rows);
   } catch (error) {
     console.log(error);

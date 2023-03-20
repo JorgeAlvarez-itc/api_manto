@@ -25,4 +25,13 @@ router.get('/departamento/:id', async(req,res)=>{
     }
 });
 
+router.get('/bitacora', async (req, res) => {
+    try {
+        const { rows } = await pool.query("SELECT * FROM bitacora ORDER BY fecha DESC");
+        res.send(rows);
+    } catch (error) {
+        console.log(error);
+    }
+});
+
 module.exports = router;
