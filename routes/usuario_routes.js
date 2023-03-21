@@ -1,11 +1,11 @@
 const express = require("express");
 const pool = require("../conecction");
-const PDFDocument = require("pdfkit-table");; 
+const PDFDocument = require("pdfkit-table");;
 const router3 = express.Router();
 const bcrypt = require('bcrypt');
 
 //Ruta para obtener todos los usuarios
-router3.get('/usuario',async(req,res)=>{
+router3.get('/usuario', async (req, res) => {
     try {
         const { rows } = await pool.query("SELECT u.*, departamento.departameto FROM usuario u join departamento using(id_departamento)");
         res.send(rows);
@@ -15,9 +15,9 @@ router3.get('/usuario',async(req,res)=>{
 });
 
 //Ruta para obtener un usuario
-router3.get('/usuario/:id',async(req,res)=>{
+router3.get('/usuario/:id', async (req, res) => {
     try {
-        const { rows } = await pool.query("SELECT * FROM usuario where id_usuario=$1",[parseInt(req.params.id)]);
+        const { rows } = await pool.query("SELECT * FROM usuario where id_usuario=$1", [parseInt(req.params.id)]);
         res.send(rows);
         res.status(200);
     } catch (error) {
@@ -27,9 +27,9 @@ router3.get('/usuario/:id',async(req,res)=>{
 });
 
 //Ruta para obtener todos los usuarios de un departamento.
-router3.get('/usuario/depto/:id',async(req,res)=>{
+router3.get('/usuario/depto/:id', async (req, res) => {
     try {
-        const { rows } = await pool.query("SELECT * FROM usuario where id_departamento=$1",[parseInt(req.params.id)]);
+        const { rows } = await pool.query("SELECT * FROM usuario where id_departamento=$1", [parseInt(req.params.id)]);
         res.send(rows);
         res.status(200);
     } catch (error) {
@@ -49,7 +49,7 @@ router3.post('/usuario/login', async (req, res) => {
         }
         const usuario = result.rows[0];
         if (usuario.contrasena === req.body.contrasena) {
-            res.status(200).json({usuario:usuario, permiso: await getPermisos(usuario['id_usuario'])});
+            res.status(200).json({ usuario: usuario, permiso: await getPermisos(usuario['id_usuario']) });
         } else {
             console.log(usuario.correo);
             return res.status(401).json({ message: 'Credenciales inválidas' });
@@ -62,32 +62,32 @@ router3.post('/usuario/login', async (req, res) => {
 
 
 //Funcion que retorna los permisos de un usuario
-async function getPermisos(id_usuario){
-    const { rows } = await pool.query('SELECT permiso FROM permisos JOIN usuario_permiso USING (id_permiso) WHERE id_usuario = $1',[id_usuario]);
+async function getPermisos(id_usuario) {
+    const { rows } = await pool.query('SELECT permiso FROM permisos JOIN usuario_permiso USING (id_permiso) WHERE id_usuario = $1', [id_usuario]);
     return rows[0]['permiso'];
 }
 
 
 //Ruta para obtener un pdf con los usuarios de un departamento
-router3.get('/usuario/report/:id',async (req,res)=>{
+router3.get('/usuario/report/:id', async (req, res) => {
     try {
         // Crear un nuevo documento PDF
         const doc = new PDFDocument();
-        const tableHeaders = ["Nombre", "Departamento","Numero de serie","Modelo"];
+        const tableHeaders = ["Nombre", "Departamento", "Numero de serie", "Modelo"];
         const tableRows = [];
-        const query = 'SELECT u.nombre, d.departameto, m.no_serie, m.modelo ' + 
-              'FROM usuario u ' + 
-              'JOIN departamento d ON u.id_departamento = d.id_departamento ' + 
-              'JOIN maquina m ON u.id_usuario = m.id_usuario ' + 
-              'WHERE u.id_departamento = $1';
-        pool.query(query,[parseInt(req.params.id)],(error,result)=>{
+        const query = 'SELECT u.nombre, d.departameto, m.no_serie, m.modelo ' +
+            'FROM usuario u ' +
+            'JOIN departamento d ON u.id_departamento = d.id_departamento ' +
+            'JOIN maquina m ON u.id_usuario = m.id_usuario ' +
+            'WHERE u.id_departamento = $1';
+        pool.query(query, [parseInt(req.params.id)], (error, result) => {
             // Agregar contenido al documento
-            doc.fontSize(14).text('Reporte de usuarios del departamento: '+ result.rows[0].departameto);
+            doc.fontSize(14).text('Reporte de usuarios del departamento: ' + result.rows[0].departameto);
             if (error) {
                 console.log(error);
             } else {
                 result.rows.forEach((row) => {
-                    tableRows.push([row.nombre, row.departameto,row.no_serie,row.modelo ]);
+                    tableRows.push([row.nombre, row.departameto, row.no_serie, row.modelo]);
                 });
 
                 // Crear una tabla con los datos obtenidos
@@ -117,15 +117,22 @@ router3.get('/usuario/report/:id',async (req,res)=>{
 
 
 //Ruta para dar de alta a nuevos usuarios.
-router3.post('/usuario',async(req,res)=>{
+router3.post('/usuario', async (req, res) => {
     try {
-        const usuarios=req.body;
-        for(const usuario of usuarios){
-            const correo=usuario.correo;
-            const nombre=usuario.nombre;
-            const id_departamento=usuario.id_departamento;
-            const query="INSERT INTO usuario(correo,nombre,id_departamento) values($1,$2,$3)"
-            await pool.query(query,[correo,nombre,id_departamento]);
+        const usuarios = req.body;
+        if (Array.isArray(usuarios)) {
+            for (const usuario of usuarios) {
+                const correo = usuario.correo;
+                const nombre = usuario.nombre;
+                const id_departamento = usuario.id_departamento;
+                const query = "INSERT INTO usuario(correo,nombre,id_departamento) values($1,$2,$3)"
+                await pool.query(query, [correo, nombre, id_departamento]);
+                res.send('Registro realizado con exito');
+                res.status(200);
+            }
+        } else {
+            const query = "INSERT INTO usuario(correo,nombre,id_departamento) values($1,$2,$3)"
+            await pool.query(query, [req.body.correo, req.body.nombre, req.body.id_departamento]);
             res.send('Registro realizado con exito');
             res.status(200);
         }
@@ -136,13 +143,14 @@ router3.post('/usuario',async(req,res)=>{
 });
 
 //Ruta para modificar un usuario.
-router3.put('/usuario/:id',async(req,res)=>{
+router3.put('/usuario/:id', async (req, res) => {
     try {
-        const correo=req.body.correo;
-        const nombre=req.body.nombre;
-        const id_departamento=req.body.id_departamento;
-        const query="Update usuario set correo=$1,nombre=$2,id_departamento=$3";
-        await pool.query(query,[correo,nombre,parseInt(id_departamento)]);
+        const correo = req.body.correo;
+        const nombre = req.body.nombre;
+        const id_departamento = req.body.id_departamento;
+        const id_usuario = req.params.id;
+        const query = "Update usuario set correo=$1,nombre=$2,id_departamento=$3 WHERE id_usuario=$4";
+        await pool.query(query, [correo, nombre, parseInt(id_departamento), parseInt(id_usuario)]);
         res.send('Modificacion exitosa');
         res.status(200);
     } catch (error) {
@@ -155,18 +163,18 @@ router3.put('/usuario/:id',async(req,res)=>{
 router3.delete('/usuario/:id', async (req, res) => {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-      const query = 'DELETE FROM usuario WHERE id_usuario = $1';
-      await client.query(query, [parseInt(req.params.id)]);
-      await client.query('COMMIT');
-      res.send('Eliminado con éxito');
-      res.status(200);
+        await client.query('BEGIN');
+        const query = 'DELETE FROM usuario WHERE id_usuario = $1';
+        await client.query(query, [parseInt(req.params.id)]);
+        await client.query('COMMIT');
+        res.send('Eliminado con éxito');
+        res.status(200);
     } catch (error) {
-      await client.query('ROLLBACK');
-      console.log(error);
-      res.status(500);
+        await client.query('ROLLBACK');
+        console.log(error);
+        res.status(500);
     } finally {
-      client.release();
+        client.release();
     }
 });
 
