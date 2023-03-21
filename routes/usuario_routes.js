@@ -125,14 +125,15 @@ router3.post('/usuario', async (req, res) => {
                 const correo = usuario.correo;
                 const nombre = usuario.nombre;
                 const id_departamento = usuario.id_departamento;
-                const query = "INSERT INTO usuario(correo,nombre,id_departamento) values($1,$2,$3)"
-                await pool.query(query, [correo, nombre, id_departamento]);
+                const contrasena = usuario.contrasena;
+                const query = "INSERT INTO usuario(correo,nombre,id_departamento,contrasena) values($1,$2,$3,$4)"
+                await pool.query(query, [correo, nombre, id_departamento,contrasena]);
                 res.send('Registro realizado con exito');
                 res.status(200);
             }
         } else {
             const query = "INSERT INTO usuario(correo,nombre,id_departamento) values($1,$2,$3)"
-            await pool.query(query, [req.body.correo, req.body.nombre, req.body.id_departamento]);
+            await pool.query(query, [req.body.correo, req.body.nombre, req.body.id_departamento,req.body.contrasena]);
             res.send('Registro realizado con exito');
             res.status(200);
         }
@@ -149,8 +150,9 @@ router3.put('/usuario/:id', async (req, res) => {
         const nombre = req.body.nombre;
         const id_departamento = req.body.id_departamento;
         const id_usuario = req.params.id;
-        const query = "Update usuario set correo=$1,nombre=$2,id_departamento=$3 WHERE id_usuario=$4";
-        await pool.query(query, [correo, nombre, parseInt(id_departamento), parseInt(id_usuario)]);
+        const contrasena = req.body.contrasena;
+        const query = "Update usuario set correo=$1,nombre=$2,id_departamento=$3,contrasena=$5 WHERE id_usuario=$4";
+        await pool.query(query, [correo, nombre, parseInt(id_departamento), parseInt(id_usuario),contrasena]);
         res.send('Modificacion exitosa');
         res.status(200);
     } catch (error) {
