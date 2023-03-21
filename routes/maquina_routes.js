@@ -43,7 +43,7 @@ router1.get("/maquina/user/:id",async(req,res)=>{
     const { rows } = await pool.query(
       `
       SELECT *
-      FROM maquina 
+      FROM maquina join departamento using(id_departamento)
       WHERE id_usuario=$1
       `,
       [parseInt(req.params.id)]
