@@ -10,7 +10,7 @@ router1.get("/maquina", async (req, res) => {
     const { rows } = await pool.query(`
       SELECT maquina.*,nombre,departamento.departameto as depto 
       FROM maquina 
-        join usuario using (id_usuario) 
+        left join usuario using (id_usuario) 
         join departamento on maquina.id_departamento = departamento.id_departamento
       `);
     res.send(rows);
@@ -26,7 +26,7 @@ router1.get("/maquina/:id", async (req, res) => {
       `
       SELECT maquina.*, usuario.nombre, usuario.correo 
       FROM maquina 
-      INNER JOIN usuario ON maquina.id_usuario = usuario.id_usuario
+      LEFT JOIN usuario ON maquina.id_usuario = usuario.id_usuario
       WHERE id_maquina=$1
       `,
       [parseInt(req.params.id)]
@@ -73,7 +73,7 @@ router1.post("/maquina", async (req, res) => {
     const maquinas = req.body;
     // Iterar sobre el arreglo de objetos que contiene las máquinas
     var no_serie, modelo, marca, id_usuario, id_departamento, fecha_anual;
-    if (Array.isArray(usuarios)) {
+    if (Array.isArray(maquinas)) {
       for (const maquina of maquinas) {
         no_serie = maquina.no_serie;
         modelo = maquina.modelo;
@@ -95,7 +95,7 @@ router1.post("/maquina", async (req, res) => {
     const values = [no_serie, modelo, marca, id_usuario, id_departamento, fecha_anual];
     await pool.query(queryText, values);
     res.send("Inserción exitosa");
-    res.status(200).send('Se ha completado con exito');
+    res.status(200);
   } catch (error) {
     console.log(error);
     res.status(500).send("Error al insertar las máquinas");
@@ -120,7 +120,7 @@ router1.put('/maquina/:id', async (req, res) => {
 
     // Imprimir el resultado de la actualización
     res.send("Modificacion exitosa");
-    res.status(200).send('Se ha completado con exito');
+    res.status(200);
   } catch (error) {
     console.log(error);
     res.status(500).send("Error al modificar las máquinas");
@@ -130,14 +130,21 @@ router1.put('/maquina/:id', async (req, res) => {
 
 //Ruta para eliminar una maquina
 router1.delete('/maquina/:id', async (req, res) => {
-  try {
-    const query = 'DELETE FROM maquina where id_maquina=$1';
-    await pool.query(query, req.params.id);
-    res.send('Eliminado con exito');
-    res.status(200);
-  } catch (error) {
-    res.status(500);
-  }
+  const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const query = 'DELETE FROM maquina WHERE id_maquina = $1';
+        await client.query(query, [parseInt(req.params.id)]);
+        await client.query('COMMIT');
+        res.send('Eliminado con éxito');
+        res.status(200);
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.log(error);
+        res.status(500);
+    } finally {
+        client.release();
+    }
 });
 
 module.exports = router1;
