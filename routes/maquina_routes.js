@@ -93,9 +93,10 @@ router1.post("/maquina", async (req, res) => {
     if (id_usuario === 0) {
       const queryText =
         "INSERT INTO maquina (no_serie, modelo, marca, id_departamento, fecha_anual) VALUES ($1, $2, $3, $5, $6)";
+    } else {
+      const queryText =
+        "INSERT INTO maquina (no_serie, modelo, marca, id_usuario, id_departamento, fecha_anual) VALUES ($1, $2, $3, $4, $5, $6)";
     }
-    const queryText =
-      "INSERT INTO maquina (no_serie, modelo, marca, id_usuario, id_departamento, fecha_anual) VALUES ($1, $2, $3, $4, $5, $6)";
 
     const values = [no_serie, modelo, marca, id_usuario, id_departamento, fecha_anual];
     await pool.query(queryText, values);
