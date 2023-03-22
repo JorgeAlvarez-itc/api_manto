@@ -126,9 +126,7 @@ router2.post('/manto/orden', async (req, res) => {
       message: 'Error al levantar la orden de mantenimiento.',
       error: err
     });
-  } finally {
-    client.release();
-  }
+  } 
 });
 
 module.exports = router2;
