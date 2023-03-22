@@ -115,7 +115,7 @@ router1.put('/maquina/:id', async (req, res) => {
     const no_serie = req.body.no_serie;
     const modelo = req.body.modelo;
     const marca = req.body.marca;
-    const id_usuario = req.body.id_usuario;
+    const id_usuario = req.body.id_usuario!=0?req.body.id_usuario:null;
     const id_departamento = req.body.id_departamento;
     const fecha_anual = req.body.fecha_anual;
 
