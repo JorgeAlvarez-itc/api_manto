@@ -90,8 +90,13 @@ router1.post("/maquina", async (req, res) => {
       id_departamento = req.body.id_departamento;
       fecha_anual = req.body.fecha_anual;
     }
+    if (id_usuario === 0) {
+      const queryText =
+        "INSERT INTO maquina (no_serie, modelo, marca, id_departamento, fecha_anual) VALUES ($1, $2, $3, $5, $6)";
+    }
     const queryText =
       "INSERT INTO maquina (no_serie, modelo, marca, id_usuario, id_departamento, fecha_anual) VALUES ($1, $2, $3, $4, $5, $6)";
+
     const values = [no_serie, modelo, marca, id_usuario, id_departamento, fecha_anual];
     await pool.query(queryText, values);
     res.send("Inserción exitosa");
@@ -131,20 +136,20 @@ router1.put('/maquina/:id', async (req, res) => {
 //Ruta para eliminar una maquina
 router1.delete('/maquina/:id', async (req, res) => {
   const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-        const query = 'DELETE FROM maquina WHERE id_maquina = $1';
-        await client.query(query, [parseInt(req.params.id)]);
-        await client.query('COMMIT');
-        res.send('Eliminado con éxito');
-        res.status(200);
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.log(error);
-        res.status(500);
-    } finally {
-        client.release();
-    }
+  try {
+    await client.query('BEGIN');
+    const query = 'DELETE FROM maquina WHERE id_maquina = $1';
+    await client.query(query, [parseInt(req.params.id)]);
+    await client.query('COMMIT');
+    res.send('Eliminado con éxito');
+    res.status(200);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.log(error);
+    res.status(500);
+  } finally {
+    client.release();
+  }
 });
 
 module.exports = router1;
