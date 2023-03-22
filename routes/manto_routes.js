@@ -89,9 +89,19 @@ router2.get("/aux/tipo", async (req, res) => {
 });
 
 //Ruta para obtener los mantenimientos asignados a un usuario(encargado)
-router2.get("/aux/:id_responsable", async (req, res) => {
+router2.get("/manto/responsable/:id_responsable", async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM mantenimiento where id_responsable=$1",[parseInt(req.params.id_responsable)]);
+    const query = `
+    SELECT mantenimiento.*,no_serie,status,tipo,nombre AS responsable
+    FROM mantenimiento
+        JOIN status_manto USING (id_status)
+        JOIN maquina USING (id_maquina)
+        JOIN tipo_mant USING (id_tipo)
+        JOIN usuario ON id_responsable = usuario.id_usuario
+    where id_responsable=$1
+    ORDER BY fecha_mant DESC;;
+      `;
+    const { rows } = await pool.query(query,[parseInt(req.params.id_responsable)]);
     res.send(rows);
   } catch (error) {
     console.log(error);
