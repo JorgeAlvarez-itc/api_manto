@@ -60,8 +60,40 @@ router2.patch("/manto_status", async (req, res) => {
       message: "Error en la actualización del status",
       error: err,
     });
-  } finally {
-    pool.release();
+  }
+});
+
+router2.patch("/manto_content/", async (req, res) => {
+  try {
+    if (req.body.type == 'admin') {
+      let descripcion = req.body.descripcion ? req.body.descripcion : null;
+      let id_responsable = req.body.id_responsable ? req.body.id_responsable : 49;
+      let id = req.body.id;
+      query =
+        "UPDATE mantenimiento SET descripcion = $1, id_responsable =$2 where id_mantenimiento = $3;";
+      result = await pool.query(query, [descripcion, id_responsable, parseInt(id)]);
+    } else {
+      if (req.body.observaciones != "") {
+        query =
+          "UPDATE mantenimiento SET piezas = $1, materiales =$2, observaciones = $3 where id_mantenimiento = $4;";
+        result = await pool.query(query, [req.body.piezas, req.body.materiales, req.body.observaciones, parseInt(req.body.id)]);
+      }
+      else {
+        query =
+          "UPDATE mantenimiento SET piezas = $1, materiales =$2 where id_mantenimiento = $3;";
+        result = await pool.query(query, [req.body.piezas, req.body.materiales, parseInt(req.body.id)]);
+      }
+    }
+
+    res.send("Actualización exitosa");
+    res.status(200);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Error en la actualización",
+      error: err,
+    });
   }
 });
 
@@ -101,7 +133,7 @@ router2.get("/manto/responsable/:id_responsable", async (req, res) => {
     where id_responsable=$1
     ORDER BY fecha_mant DESC;;
       `;
-    const { rows } = await pool.query(query,[parseInt(req.params.id_responsable)]);
+    const { rows } = await pool.query(query, [parseInt(req.params.id_responsable)]);
     res.send(rows);
   } catch (error) {
     console.log(error);
@@ -126,17 +158,14 @@ router2.post("/manto/orden", async (req, res) => {
       "UPDATE maquina SET id_usuario = NULL WHERE id_usuario = $1 RETURNING id_usuario";
     const values2 = [req.body.id_usuario];
     const result2 = await client.query(query2, values2);
-    const id_usuario = result2.rows[0].id_usuario;
 
     // Hacer una insersión en la tabla mantenimiento
     const query3 =
-      "INSERT INTO mantenimiento (descripcion, id_tipo, id_maquina, piezas, materiales, fecha_mant, id_responsable, id_status) VALUES ($1, $2, $3, $4, $5, $6, $7, 1) RETURNING id_mantenimiento";
+      "INSERT INTO mantenimiento (descripcion, id_tipo, id_maquina, fecha_mant, id_responsable, id_status) VALUES ($1, $2, $3, $4, $5, 1) RETURNING id_mantenimiento";
     const values3 = [
       req.body.descripcion,
       req.body.id_tipo,
       req.body.id_maquina,
-      req.body.piezas,
-      req.body.materiales,
       req.body.fecha_mant,
       req.body.id_responsable,
     ];
